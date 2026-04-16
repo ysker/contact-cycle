@@ -250,6 +250,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div id="d-body"></div>
   <div class="mact">
     <button class="mbtn-c" onclick="closeModal('m-detail')">닫기</button>
+    <button style="flex:1;padding:12px;font-size:14px;border-radius:8px;cursor:pointer;border:0.5px solid #E24B4A;color:#E24B4A;background:transparent;font-weight:500" onclick="deleteFromPool()">삭제</button>
     <button class="mbtn-p" onclick="addDetailToPool()">사이클에 추가</button>
   </div>
 </div>
@@ -478,6 +479,16 @@ function addDetailToPool(){
   closeModal('m-detail');
   poolPickSelected=new Set([detailPersonId]);
   openPoolPick();
+}
+
+function deleteFromPool(){
+  if(!detailPersonId)return;
+  const p=pool.find(x=>x.id===detailPersonId);if(!p)return;
+  if(!confirm(`"${p.name}"을 연락처 풀에서 완전히 삭제할까요?\n사이클 목록에서도 제거됩니다.`))return;
+  pool=pool.filter(x=>x.id!==detailPersonId);
+  cycle=cycle.filter(c=>c.pid!==detailPersonId);
+  save();closeModal('m-detail');initHeader();renderCycle();
+  if(currentView==='pool')renderPool();
 }
 
 function markDone(id){cycle=cycle.map(c=>c.id===id?{...c,done:true}:c);save();initHeader();renderCycle();}

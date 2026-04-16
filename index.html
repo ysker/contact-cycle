@@ -403,8 +403,11 @@ function save(){
 
 function syncToSheets(){
   const data={pool,cycle,half:cycleHalf};
-  const url=SCRIPT_URL+'?action=save&data='+encodeURIComponent(JSON.stringify(data));
-  fetch(url).catch(()=>{});
+  fetch(SCRIPT_URL,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'save',data})
+  }).catch(()=>{});
 }
 
 async function loadFromSheets(){

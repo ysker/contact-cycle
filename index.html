@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="theme-color" content="#1D9E75"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="연락사이클"/>
+<title>연락 사이클 관리</title>
+<link rel="manifest" href="manifest.json"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --cg:#1D9E75;--cb:#378ADD;--cr:#E24B4A;--ca:#BA7517;--cp:#7F77DD;
+  --bg:#F8F8F6;--surface:#FFFFFF;--border:#E5E5E0;--border2:#D0D0C8;
+  --text:#1A1A18;--text2:#6B6B66;--text3:#A0A09A;
+  --info-bg:#E6F1FB;--info-txt:#185FA5;
+  --success-bg:#E1F5EE;--success-txt:#0F6E56;
+  --warn-bg:#FAEEDA;--warn-txt:#854F0B;
+  --radius:12px;--radius-sm:8px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1A1A18;--surface:#242422;--border:#3A3A36;--border2:#4A4A46;
+    --text:#F0F0EC;--text2:#9A9A94;--text3:#6A6A64;
+    --info-bg:#0C2A44;--info-txt:#7BBEF0;
+    --success-bg:#0A2E22;--success-txt:#5ECBA8;
+    --warn-bg:#2E1E06;--warn-txt:#E8B05A;
+  }
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.5;min-height:100vh}
+.app{max-width:480px;margin:0 auto;padding:12px 12px 80px}
+
+/* Header */
+.hdr{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px}
+.hdr-top{display:flex;align-items:center;justify-content:space-between}
+.hdr-title{font-size:16px;font-weight:600;color:var(--text)}
+.cycle-badge{font-size:13px;font-weight:500;padding:4px 14px;border-radius:20px;background:var(--info-bg);color:var(--info-txt)}
+.prog-row{display:flex;gap:3px;margin-top:10px}
+.pd{flex:1;height:5px;border-radius:3px;background:var(--border)}
+.pd.done{background:var(--cg)}.pd.today{background:var(--cb)}
+.prog-info{display:flex;justify-content:space-between;margin-top:5px;font-size:11px;color:var(--text2)}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.sc{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 6px;text-align:center}
+.sc-n{font-size:20px;font-weight:600;color:var(--text)}
+.sc-l{font-size:10px;color:var(--text2);margin-top:2px}
+
+/* Nav */
+.nav{display:flex;gap:5px;margin-bottom:10px}
+.nav-tab{flex:1;padding:9px 4px;font-size:13px;text-align:center;border:0.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text2);cursor:pointer;font-weight:500}
+.nav-tab.on{background:var(--info-bg);color:var(--info-txt);border-color:var(--cb)}
+
+/* Region section */
+.rsec{border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:8px;overflow:hidden;background:var(--surface)}
+.rhdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);cursor:pointer}
+.rtitle{font-size:12px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
+.rcnt{font-size:10px;padding:1px 8px;border-radius:10px;background:var(--surface);color:var(--text2);border:0.5px solid var(--border)}
+.rbody{display:none}.rbody.open{display:block}
+
+/* Contact row */
+.crow{display:flex;align-items:flex-start;padding:11px 14px;border-top:0.5px solid var(--border);gap:10px}
+.crow.carry{border-left:3px solid var(--ca)}
+.av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;margin-top:1px}
+.ci{flex:1;min-width:0}
+.cn{font-size:14px;font-weight:500;color:var(--text);display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.cs{font-size:12px;color:var(--text2);margin-top:2px}
+.cmeta{font-size:11px;color:var(--text3);margin-top:3px}
+.tag{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500}
+.tag-m{background:var(--info-bg);color:var(--info-txt)}
+.tag-c{background:var(--success-bg);color:var(--success-txt)}
+.tag-carry{background:var(--warn-bg);color:var(--warn-txt)}
+.tag-cur{background:#F0EEFE;color:#5348B0}
+.ca{display:flex;gap:4px;flex-direction:column;align-items:flex-end;flex-shrink:0}
+.bs{padding:5px 10px;font-size:11px;border-radius:var(--radius-sm);border:0.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:500}
+.bs.green{background:var(--success-bg);color:var(--success-txt);border-color:#9FE1CB}
+.bs.blue{background:var(--info-bg);color:var(--info-txt);border-color:#B5D4F4}
+.bs.red{color:var(--cr);border-color:var(--cr)}
+
+/* Bottom action bar */
+.abar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:0.5px solid var(--border);padding:10px 12px;display:flex;gap:6px;max-width:480px;margin:0 auto}
+.abar button{flex:1;padding:11px 4px;font-size:12px;border-radius:var(--radius-sm);border:0.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-weight:500}
+.abar .primary{background:var(--cg);color:#fff;border-color:var(--cg)}
+
+/* Modal */
+.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:flex-end;justify-content:center;padding:0}
+.mbg.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;padding:20px 18px 32px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+.modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 16px}
+.modal h2{font-size:15px;font-weight:600;margin-bottom:14px;color:var(--text)}
+.fr{margin-bottom:11px}
+.fr label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px;font-weight:500}
+.fr input,.fr select,.fr textarea{width:100%;padding:10px 12px;font-size:14px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);-webkit-appearance:none;appearance:none}
+.fr select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.fr textarea{resize:none;height:72px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:7px 14px;font-size:13px;border-radius:20px;border:0.5px solid var(--border2);cursor:pointer;color:var(--text2);background:transparent;font-weight:500}
+.chip.on{background:var(--info-bg);color:var(--info-txt);border-color:var(--cb)}
+.time-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mact{display:flex;gap:8px;margin-top:14px}
+.mact button{flex:1;padding:12px;font-size:14px;border-radius:var(--radius-sm);cursor:pointer;border:0.5px solid var(--border2);font-weight:500}
+.mbtn-p{background:var(--cg);color:#fff;border-color:var(--cg)}
+.mbtn-c{background:transparent;color:var(--text2)}
+
+/* Pool */
+.pool-item{display:flex;align-items:center;padding:11px 14px;border-top:0.5px solid var(--border);gap:10px;cursor:pointer}
+.pool-item:active{background:var(--bg)}
+.pool-check{width:20px;height:20px;border-radius:6px;border:0.5px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px}
+.pool-check.on{background:var(--cg);color:#fff;border-color:var(--cg)}
+.empty{padding:24px;text-align:center;color:var(--text3);font-size:13px}
+.hist-row{padding:8px 0;border-top:0.5px solid var(--border);font-size:13px;color:var(--text2)}
+.hist-row strong{color:var(--text)}
+.divider-lbl{font-size:11px;color:var(--text2);padding:8px 2px 4px;font-weight:600;letter-spacing:0.02em}
+.method-pill{display:inline-block;font-size:10px;padding:1px 6px;border-radius:8px;background:var(--bg);color:var(--text2);border:0.5px solid var(--border);margin-left:4px}
+
+/* Section label */
+.sec-lbl{font-size:11px;color:var(--text2);padding:6px 14px;background:var(--bg);font-weight:600;border-top:0.5px solid var(--border)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="hdr-title">연락 사이클</div>
+    <div class="cycle-badge" id="cycle-label">4월 전반</div>
+  </div>
+  <div class="prog-row" id="prog-bar"></div>
+  <div class="prog-info"><span id="pi-start"></span><span id="pi-day"></span><span id="pi-end"></span></div>
+</div>
+
+<div class="stats">
+  <div class="sc"><div class="sc-n" id="st-total">0</div><div class="sc-l">전체</div></div>
+  <div class="sc"><div class="sc-n" id="st-done">0</div><div class="sc-l">완료</div></div>
+  <div class="sc"><div class="sc-n" id="st-left">0</div><div class="sc-l">남은</div></div>
+  <div class="sc"><div class="sc-n" id="st-carry">0</div><div class="sc-l">이월</div></div>
+</div>
+
+<div class="nav">
+  <div class="nav-tab on" onclick="setView('cycle')">이번 사이클</div>
+  <div class="nav-tab" onclick="setView('pool')">연락처 풀</div>
+</div>
+
+<div id="view-cycle"></div>
+<div id="view-pool" style="display:none"></div>
+
+</div><!-- /app -->
+
+<div class="abar" id="abar">
+  <button onclick="openAddModal()">+ 새 연락처</button>
+  <button onclick="openPoolPick()">풀에서 추가</button>
+  <button class="primary" onclick="endCycle()">사이클 종료</button>
+</div>
+
+<!-- 새 연락처 추가 -->
+<div class="mbg" id="m-add" onclick="bgClose(event,'m-add')">
+<div class="modal">
+  <div class="modal-handle"></div>
+  <h2>새 연락처 추가</h2>
+  <div class="fr"><label>이름 *</label><input id="f-name" placeholder="홍길동" autocomplete="off"/></div>
+  <div class="fr"><label>회사 / 직책</label><input id="f-company" placeholder="회사명 · 직책" autocomplete="off"/></div>
+  <div class="fr">
+    <label>연락 수단</label>
+    <div class="chips" id="method-chips">
+      <div class="chip" data-v="위챗" onclick="toggleChip(this)">위챗</div>
+      <div class="chip on" data-v="카톡" onclick="toggleChip(this)">카톡</div>
+      <div class="chip" data-v="전화" onclick="toggleChip(this)">전화</div>
+      <div class="chip" data-v="이메일" onclick="toggleChip(this)">이메일</div>
+      <div class="chip" data-v="기타" onclick="toggleChip(this)">기타</div>
+    </div>
+  </div>
+  <div class="fr"><label>지역</label>
+    <select id="f-region">
+      <option value="서울">서울</option><option value="한국기타">한국 기타</option>
+      <option value="상해">상해</option><option value="북경">북경</option>
+      <option value="중국기타">중국 기타</option><option value="일본">일본</option>
+      <option value="미국">미국</option><option value="기타">기타 국가</option>
+    </select>
+  </div>
+  <div class="fr"><label>사이클</label><select id="f-cycle-target"></select></div>
+  <div class="fr"><label>유형</label>
+    <select id="f-type" onchange="toggleMF('meeting-fields','f-type')">
+      <option value="contact">연락</option><option value="meeting">미팅</option>
+    </select>
+  </div>
+  <div id="meeting-fields" style="display:none">
+    <div class="fr"><label>날짜</label><input id="f-mdate" type="date"/></div>
+    <div class="fr"><label>시간</label>
+      <div class="time-row">
+        <select id="f-hour"><option value="">시 선택</option></select>
+        <select id="f-min">
+          <option value="">분 선택</option>
+          <option value="00">00분</option><option value="15">15분</option>
+          <option value="30">30분</option><option value="45">45분</option>
+        </select>
+      </div>
+    </div>
+    <div class="fr"><label>장소</label><input id="f-place" placeholder="강남역 스타벅스 2층" autocomplete="off"/></div>
+  </div>
+  <div class="fr"><label>메모</label><textarea id="f-memo" placeholder="참고사항..."></textarea></div>
+  <div class="mact">
+    <button class="mbtn-c" onclick="closeModal('m-add')">취소</button>
+    <button class="mbtn-p" onclick="saveNewContact()">저장</button>
+  </div>
+</div>
+</div>
+
+<!-- 풀에서 추가 -->
+<div class="mbg" id="m-pool-pick" onclick="bgClose(event,'m-pool-pick')">
+<div class="modal">
+  <div class="modal-handle"></div>
+  <h2>풀에서 사이클에 추가</h2>
+  <div class="fr"><input id="pool-search" placeholder="이름 검색..." oninput="renderPoolPick()" autocomplete="off"/></div>
+  <div id="pool-pick-list" style="max-height:240px;overflow-y:auto;border:0.5px solid var(--border);border-radius:var(--radius-sm)"></div>
+  <div class="fr" style="margin-top:10px"><label>사이클</label><select id="pp-cycle-target"></select></div>
+  <div class="fr"><label>유형</label>
+    <select id="pp-type" onchange="toggleMF('pp-meeting-fields','pp-type')">
+      <option value="contact">연락</option><option value="meeting">미팅</option>
+    </select>
+  </div>
+  <div id="pp-meeting-fields" style="display:none">
+    <div class="fr"><label>날짜</label><input id="pp-mdate" type="date"/></div>
+    <div class="fr"><label>시간</label>
+      <div class="time-row">
+        <select id="pp-hour"><option value="">시 선택</option></select>
+        <select id="pp-min">
+          <option value="">분 선택</option>
+          <option value="00">00분</option><option value="15">15분</option>
+          <option value="30">30분</option><option value="45">45분</option>
+        </select>
+      </div>
+    </div>
+    <div class="fr"><label>장소</label><input id="pp-place" placeholder="장소" autocomplete="off"/></div>
+  </div>
+  <div class="mact">
+    <button class="mbtn-c" onclick="closeModal('m-pool-pick')">취소</button>
+    <button class="mbtn-p" onclick="addFromPool()">추가</button>
+  </div>
+</div>
+</div>
+
+<!-- 연락처 상세 -->
+<div class="mbg" id="m-detail" onclick="bgClose(event,'m-detail')">
+<div class="modal">
+  <div class="modal-handle"></div>
+  <h2 id="d-name"></h2>
+  <div id="d-body"></div>
+  <div class="mact">
+    <button class="mbtn-c" onclick="closeModal('m-detail')">닫기</button>
+    <button class="mbtn-p" onclick="addDetailToPool()">사이클에 추가</button>
+  </div>
+</div>
+</div>
+
+<script>
+const REGIONS=['서울','한국기타','상해','북경','중국기타','일본','미국','기타'];
+const R_LABEL={서울:'서울',한국기타:'한국 기타',상해:'상해',북경:'북경',중국기타:'중국 기타',일본:'일본',미국:'미국',기타:'기타 국가'};
+const AVC=['#1D9E75','#378ADD','#D85A30','#7F77DD','#BA7517','#D4537E','#0F6E56','#185FA5'];
+
+let pool=JSON.parse(localStorage.getItem('cp_pool')||'null');
+let cycle=JSON.parse(localStorage.getItem('cp_cycle')||'null');
+let cycleHalf=localStorage.getItem('cp_half')||computeHalf();
+let currentView='cycle';
+let poolPickSelected=new Set();
+let detailPersonId=null;
+
+function computeHalf(){const d=new Date();return `${d.getMonth()+1}월 ${d.getDate()<=15?'전반':'후반'}`;}
+
+function halfList(){
+  const res=[];
+  const d=new Date();
+  let m=d.getMonth()+1,h=d.getDate()<=15?'전반':'후반';
+  for(let i=0;i<5;i++){
+    res.push(`${m}월 ${h}`);
+    if(h==='전반'){h='후반';}else{h='전반';m=m%12+1;}
+  }
+  return res;
+}
+
+function populateCycleSelects(){
+  const opts=halfList();
+  ['f-cycle-target','pp-cycle-target'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    el.innerHTML='';
+    opts.forEach((o,i)=>{
+      const opt=document.createElement('option');
+      opt.value=o;opt.textContent=o+(i===0?' (이번)':'');
+      el.appendChild(opt);
+    });
+  });
+}
+
+function populateHours(selId){
+  const el=document.getElementById(selId);
+  el.innerHTML='<option value="">시 선택</option>';
+  for(let h=7;h<=23;h++){
+    const o=document.createElement('option');
+    o.value=String(h).padStart(2,'0');o.textContent=`${h}시`;
+    el.appendChild(o);
+  }
+}
+
+if(!pool){
+  pool=[
+    {id:'p1',name:'김민준',company:'삼성전자 파트장',methods:['카톡'],region:'서울',history:[{cycle:'4월 전반',type:'meeting',datetime:'2025-04-03T14:00',place:'역삼 본사',memo:'Q2 협의',done:true}]},
+    {id:'p2',name:'이서연',company:'카카오 PM',methods:['카톡'],region:'서울',history:[{cycle:'3월 후반',type:'contact',done:true,memo:'근황 공유'}]},
+    {id:'p3',name:'Wang Wei',company:'알리바바 BD',methods:['위챗'],region:'상해',history:[{cycle:'3월 후반',type:'meeting',datetime:'2025-03-22T10:00',place:'상해 오피스',done:false,memo:''}]},
+    {id:'p4',name:'박지호',company:'현대차 울산',methods:['전화'],region:'한국기타',history:[]},
+    {id:'p5',name:'Tanaka Ken',company:'소니 기획',methods:['이메일'],region:'일본',history:[]},
+    {id:'p6',name:'Sarah Kim',company:'구글 NYC',methods:['이메일'],region:'미국',history:[]},
+  ];
+  localStorage.setItem('cp_pool',JSON.stringify(pool));
+}
+if(!cycle){
+  cycle=[
+    {id:'c1',pid:'p1',cycleTarget:'4월 전반',type:'meeting',datetime:'2025-04-10T14:00',place:'역삼 본사',memo:'Q2 방향성',done:true,carry:false},
+    {id:'c2',pid:'p2',cycleTarget:'4월 전반',type:'contact',memo:'',done:false,carry:false},
+    {id:'c3',pid:'p3',cycleTarget:'4월 전반',type:'meeting',datetime:'',place:'',memo:'',done:false,carry:true},
+    {id:'c5',pid:'p5',cycleTarget:'4월 후반',type:'meeting',datetime:'',place:'',memo:'',done:false,carry:false},
+  ];
+  localStorage.setItem('cp_cycle',JSON.stringify(cycle));
+}
+
+function save(){
+  localStorage.setItem('cp_pool',JSON.stringify(pool));
+  localStorage.setItem('cp_cycle',JSON.stringify(cycle));
+}
+function getPerson(pid){return pool.find(p=>p.id===pid)||{name:'?',company:'',region:'기타',methods:[]};}
+function avColor(n){let h=0;for(let c of n)h+=c.charCodeAt(0);return AVC[h%AVC.length];}
+function initials(n){const p=n.trim().split(/\s+/);return p.length>=2?(p[0][0]+p[1][0]).toUpperCase():n.slice(0,2).toUpperCase();}
+function fmtDT(s){if(!s)return '';const d=new Date(s);return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
+function buildDT(date,hour,min){if(!date||!hour||!min)return '';return `${date}T${hour}:${min}`;}
+
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function bgClose(e,id){if(e.target===e.currentTarget)closeModal(id);}
+function toggleChip(el){el.classList.toggle('on');}
+function toggleMF(fieldId,selId){
+  document.getElementById(fieldId).style.display=document.getElementById(selId).value==='meeting'?'block':'none';
+}
+
+function halfDates(half){
+  const match=half.match(/(\d+)월 (전반|후반)/);
+  if(!match)return{start:new Date(),end:new Date()};
+  const mon=parseInt(match[1])-1,h=match[2],yr=new Date().getFullYear();
+  if(h==='전반')return{start:new Date(yr,mon,1),end:new Date(yr,mon,15)};
+  return{start:new Date(yr,mon,16),end:new Date(yr,mon+1,0)};
+}
+
+function initHeader(){
+  const{start,end}=halfDates(cycleHalf);
+  const today=new Date();
+  const totalDays=Math.round((end-start)/864e5)+1;
+  const elapsed=Math.min(Math.max(Math.round((today-start)/864e5),0),totalDays);
+  document.getElementById('cycle-label').textContent=cycleHalf;
+  const bar=document.getElementById('prog-bar');bar.innerHTML='';
+  for(let i=0;i<totalDays;i++){
+    const d=document.createElement('div');
+    d.className='pd'+(i<elapsed?' done':(i===elapsed?' today':''));
+    bar.appendChild(d);
+  }
+  document.getElementById('pi-start').textContent=`${start.getMonth()+1}/${start.getDate()}`;
+  document.getElementById('pi-day').textContent=`${Math.min(elapsed+1,totalDays)}일차 / ${totalDays}일`;
+  document.getElementById('pi-end').textContent=`${end.getMonth()+1}/${end.getDate()}`;
+  const cur=cycle.filter(c=>c.cycleTarget===cycleHalf);
+  document.getElementById('st-total').textContent=cur.length;
+  document.getElementById('st-done').textContent=cur.filter(c=>c.done).length;
+  document.getElementById('st-left').textContent=cur.filter(c=>!c.done).length;
+  document.getElementById('st-carry').textContent=cycle.filter(c=>c.carry).length;
+}
+
+function renderCycle(){
+  const targets=[...new Set(cycle.map(c=>c.cycleTarget))].sort((a,b)=>{
+    const pa=a.match(/(\d+)월 (전반|후반)/),pb=b.match(/(\d+)월 (전반|후반)/);
+    const va=parseInt(pa[1])*2+(pa[2]==='전반'?0:1);
+    const vb=parseInt(pb[1])*2+(pb[2]==='전반'?0:1);
+    return va-vb;
+  });
+  let html='';
+  targets.forEach(target=>{
+    const items=cycle.filter(c=>c.cycleTarget===target);
+    const isCur=target===cycleHalf;
+    html+=`<div class="divider-lbl">${target}${isCur?' · 현재 사이클':''}</div>`;
+    const byR={};REGIONS.forEach(r=>byR[r]=[]);
+    items.forEach(ci=>{const p=getPerson(ci.pid);if(byR[p.region])byR[p.region].push(ci);});
+    REGIONS.forEach(r=>{
+      const list=byR[r];if(!list.length)return;
+      html+=`<div class="rsec"><div class="rhdr" onclick="this.nextElementSibling.classList.toggle('open')">
+        <div class="rtitle">${R_LABEL[r]||r}<span class="rcnt">${list.length}</span></div>
+        <span style="font-size:11px;color:var(--text3)">▾</span>
+      </div><div class="rbody open">`;
+      list.forEach(ci=>{
+        const p=getPerson(ci.pid);const col=avColor(p.name);
+        const typeLbl=ci.type==='meeting'?'미팅':'연락';
+        const tagCls=ci.type==='meeting'?'tag-m':'tag-c';
+        const methods=(p.methods||[]).map(m=>`<span class="method-pill">${m}</span>`).join('');
+        html+=`<div class="crow${ci.carry?' carry':''}">
+          <div class="av" style="background:${col}20;color:${col}">${initials(p.name)}</div>
+          <div class="ci">
+            <div class="cn">${p.name}<span class="tag ${tagCls}">${typeLbl}</span>${ci.carry?'<span class="tag tag-carry">이월</span>':''}</div>
+            <div class="cs">${p.company||''}${methods}</div>
+            ${ci.type==='meeting'&&ci.datetime?`<div class="cmeta">📅 ${fmtDT(ci.datetime)}${ci.place?' · '+ci.place:''}</div>`:''}
+            ${ci.memo?`<div class="cmeta">${ci.memo}</div>`:''}
+          </div>
+          <div class="ca">
+            ${ci.done
+              ?`<button class="bs green" onclick="undoDone('${ci.id}')">완료✓</button>`
+              :`<button class="bs blue" onclick="markDone('${ci.id}')">${typeLbl}완료</button>`}
+            <button class="bs red" onclick="removeCycle('${ci.id}')">빼기</button>
+          </div>
+        </div>`;
+      });
+      html+='</div></div>';
+    });
+  });
+  if(!html)html='<div class="empty">연락처를 추가해보세요</div>';
+  document.getElementById('view-cycle').innerHTML=html;
+}
+
+function renderPool(){
+  const qEl=document.getElementById('pool-search-main');
+  const q=qEl?qEl.value.toLowerCase():'';
+  const filtered=pool.filter(p=>p.name.toLowerCase().includes(q)||((p.company||'').toLowerCase().includes(q)));
+  const byR={};REGIONS.forEach(r=>byR[r]=[]);
+  filtered.forEach(p=>{if(byR[p.region])byR[p.region].push(p);});
+  let html=`<div class="fr" style="margin-bottom:8px"><input id="pool-search-main" placeholder="이름/회사 검색..." oninput="renderPool()" value="${q}" autocomplete="off" style="width:100%;padding:10px 12px;font-size:14px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface);color:var(--text)"/></div>`;
+  let any=false;
+  REGIONS.forEach(r=>{
+    const list=byR[r];if(!list.length)return;
+    any=true;
+    html+=`<div class="rsec"><div class="rhdr" onclick="this.nextElementSibling.classList.toggle('open')">
+      <div class="rtitle">${R_LABEL[r]||r}<span class="rcnt">${list.length}</span></div>
+      <span style="font-size:11px;color:var(--text3)">▾</span>
+    </div><div class="rbody open">`;
+    list.forEach(p=>{
+      const col=avColor(p.name);
+      const inCycle=cycle.some(c=>c.pid===p.id);
+      const lastH=p.history.length?p.history[p.history.length-1]:null;
+      const methods=(p.methods||[]).map(m=>`<span class="method-pill">${m}</span>`).join('');
+      html+=`<div class="pool-item" onclick="showDetail('${p.id}')">
+        <div class="av" style="background:${col}20;color:${col}">${initials(p.name)}</div>
+        <div class="ci">
+          <div class="cn" style="font-size:13px">${p.name}${inCycle?'<span class="tag tag-c" style="font-size:9px">사이클중</span>':''}${methods}</div>
+          <div class="cs">${p.company||''}</div>
+          ${lastH?`<div class="cmeta">최근: ${lastH.cycle} · ${lastH.type==='meeting'?'미팅':'연락'} · ${lastH.done?'완료':'미완료'}</div>`:'<div class="cmeta">이력 없음</div>'}
+        </div>
+        <div style="font-size:20px;color:var(--text3)">›</div>
+      </div>`;
+    });
+    html+='</div></div>';
+  });
+  if(!any)html+=`<div class="empty">검색 결과 없음</div>`;
+  document.getElementById('view-pool').innerHTML=html;
+}
+
+function showDetail(pid){
+  const p=pool.find(x=>x.id===pid);if(!p)return;
+  detailPersonId=pid;
+  document.getElementById('d-name').textContent=p.name;
+  const methods=(p.methods||[]).join(', ');
+  let html=`<div style="font-size:13px;color:var(--text2);margin-bottom:12px">${p.company||''} · ${R_LABEL[p.region]||p.region}${methods?' · '+methods:''}</div>`;
+  html+=`<div class="sec-lbl" style="margin:0 -18px;padding:6px 18px;font-size:11px;color:var(--text2);background:var(--bg);font-weight:600;border-top:0.5px solid var(--border)">연락 이력 (${p.history.length}건)</div>`;
+  if(!p.history.length)html+='<div class="empty">이력 없음</div>';
+  else[...p.history].reverse().forEach(h=>{
+    html+=`<div class="hist-row"><strong>${h.cycle}</strong> · ${h.type==='meeting'?'미팅':'연락'} · ${h.done?'✓완료':'미완료'}`;
+    if(h.datetime)html+=` · ${fmtDT(h.datetime)}`;
+    if(h.place)html+=` · ${h.place}`;
+    if(h.memo)html+=`<br><span style="color:var(--text3);font-size:12px">${h.memo}</span>`;
+    html+='</div>';
+  });
+  document.getElementById('d-body').innerHTML=html;
+  document.getElementById('m-detail').classList.add('open');
+}
+function addDetailToPool(){
+  if(!detailPersonId)return;
+  closeModal('m-detail');
+  poolPickSelected=new Set([detailPersonId]);
+  openPoolPick();
+}
+
+function markDone(id){cycle=cycle.map(c=>c.id===id?{...c,done:true}:c);save();initHeader();renderCycle();}
+function undoDone(id){cycle=cycle.map(c=>c.id===id?{...c,done:false}:c);save();initHeader();renderCycle();}
+function removeCycle(id){if(!confirm('이번 사이클에서 제거할까요?'))return;cycle=cycle.filter(c=>c.id!==id);save();initHeader();renderCycle();}
+
+function openAddModal(){
+  populateCycleSelects();populateHours('f-hour');
+  document.getElementById('meeting-fields').style.display='none';
+  document.getElementById('f-type').value='contact';
+  document.getElementById('m-add').classList.add('open');
+}
+function openPoolPick(){
+  populateCycleSelects();populateHours('pp-hour');
+  document.getElementById('pp-type').value='contact';
+  document.getElementById('pp-meeting-fields').style.display='none';
+  document.getElementById('pool-search').value='';
+  renderPoolPick();
+  document.getElementById('m-pool-pick').classList.add('open');
+}
+
+function renderPoolPick(){
+  const q=document.getElementById('pool-search').value.toLowerCase();
+  const notIn=pool.filter(p=>!cycle.some(c=>c.pid===p.id&&c.cycleTarget===(document.getElementById('pp-cycle-target')||{value:cycleHalf}).value));
+  const filtered=notIn.filter(p=>p.name.toLowerCase().includes(q)||(p.company||'').toLowerCase().includes(q));
+  let html='';
+  if(!filtered.length){html='<div class="empty">추가할 연락처 없음</div>';}
+  else filtered.forEach(p=>{
+    const sel=poolPickSelected.has(p.id);const col=avColor(p.name);
+    html+=`<div class="pool-item" onclick="togglePoolPick('${p.id}')">
+      <div class="pool-check ${sel?'on':''}">${sel?'✓':''}</div>
+      <div class="av" style="background:${col}20;color:${col};width:30px;height:30px;font-size:11px">${initials(p.name)}</div>
+      <div class="ci"><div class="cn" style="font-size:13px">${p.name}</div><div class="cs">${p.company||''}</div></div>
+    </div>`;
+  });
+  document.getElementById('pool-pick-list').innerHTML=html;
+}
+function togglePoolPick(pid){
+  if(poolPickSelected.has(pid))poolPickSelected.delete(pid);else poolPickSelected.add(pid);
+  renderPoolPick();
+}
+
+function getChips(id){return[...document.querySelectorAll(`#${id} .chip.on`)].map(c=>c.dataset.v);}
+
+function saveNewContact(){
+  const name=document.getElementById('f-name').value.trim();if(!name){alert('이름을 입력해주세요');return;}
+  const type=document.getElementById('f-type').value;
+  const cycleTarget=document.getElementById('f-cycle-target').value||cycleHalf;
+  const date=document.getElementById('f-mdate').value;
+  const hour=document.getElementById('f-hour').value;
+  const min=document.getElementById('f-min').value;
+  const pid='p'+Date.now();
+  pool.push({id:pid,name,company:document.getElementById('f-company').value.trim(),methods:getChips('method-chips'),region:document.getElementById('f-region').value,history:[]});
+  cycle.push({id:'c'+Date.now(),pid,cycleTarget,type,datetime:type==='meeting'?buildDT(date,hour,min):'',place:type==='meeting'?document.getElementById('f-place').value.trim():'',memo:document.getElementById('f-memo').value.trim(),done:false,carry:false});
+  save();closeModal('m-add');initHeader();renderCycle();
+  ['f-name','f-company','f-memo','f-mdate','f-place'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-hour').value='';document.getElementById('f-min').value='';
+  document.querySelectorAll('#method-chips .chip').forEach((c,i)=>c.classList.toggle('on',c.dataset.v==='카톡'));
+  document.getElementById('meeting-fields').style.display='none';
+}
+
+function addFromPool(){
+  if(!poolPickSelected.size){alert('연락처를 선택해주세요');return;}
+  const type=document.getElementById('pp-type').value;
+  const cycleTarget=document.getElementById('pp-cycle-target').value||cycleHalf;
+  const date=document.getElementById('pp-mdate').value;
+  const hour=document.getElementById('pp-hour').value;
+  const min=document.getElementById('pp-min').value;
+  const place=document.getElementById('pp-place').value;
+  poolPickSelected.forEach(pid=>{
+    cycle.push({id:'c'+Date.now()+Math.random(),pid,cycleTarget,type,datetime:type==='meeting'?buildDT(date,hour,min):'',place:type==='meeting'?place:'',memo:'',done:false,carry:false});
+  });
+  poolPickSelected=new Set();
+  save();closeModal('m-pool-pick');initHeader();renderCycle();
+}
+
+function endCycle(){
+  if(!confirm(`"${cycleHalf}" 사이클을 종료할까요?\n완료 항목 → 이력 저장\n미완료 항목 → 다음 사이클 이월`))return;
+  cycle.filter(c=>c.cycleTarget===cycleHalf).forEach(ci=>{
+    const p=pool.find(x=>x.id===ci.pid);if(!p)return;
+    p.history.push({cycle:cycleHalf,type:ci.type,datetime:ci.datetime||'',place:ci.place||'',memo:ci.memo||'',done:ci.done});
+  });
+  const match=cycleHalf.match(/(\d+)월 (전반|후반)/);
+  let nm=parseInt(match[1]),nh;
+  if(match[2]==='전반'){nh='후반';}else{nh='전반';nm=nm%12+1;}
+  const nextHalf=`${nm}월 ${nh}`;
+  cycle=cycle.map(c=>{
+    if(c.cycleTarget!==cycleHalf)return c;
+    if(c.done)return null;
+    return{...c,cycleTarget:nextHalf,carry:true};
+  }).filter(Boolean);
+  cycleHalf=nextHalf;
+  localStorage.setItem('cp_half',cycleHalf);
+  save();initHeader();renderCycle();
+}
+
+function setView(v){
+  currentView=v;
+  document.querySelectorAll('.nav-tab').forEach((el,i)=>el.classList.toggle('on',['cycle','pool'][i]===v));
+  document.getElementById('view-cycle').style.display=v==='cycle'?'block':'none';
+  document.getElementById('view-pool').style.display=v==='pool'?'block':'none';
+  document.getElementById('abar').style.display=v==='cycle'?'flex':'none';
+  if(v==='pool')renderPool();
+}
+
+initHeader();
+renderCycle();
+</script>
+</body>
+</html>

@@ -130,6 +130,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
   <div class="prog-row" id="prog-bar"></div>
   <div class="prog-info"><span id="pi-start"></span><span id="pi-day"></span><span id="pi-end"></span></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+    <span id="sync-status" style="font-size:11px;color:var(--text2)"></span>
+    <button onclick="loadFromSheets()" style="font-size:11px;padding:3px 10px;border-radius:6px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer">↻ 동기화</button>
+  </div>
 </div>
 
 <div class="stats">
@@ -322,6 +326,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <script>
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbzkGYwNgKLN4k5nepc64WS_lGsuMvuvS8nnIA9zFiRzsGGT4bRxew2UMKvKQxAKM5Kd5g/exec';
 const REGIONS=['서울','한국기타','상해','북경','중국기타','일본','미국','기타'];
 const R_LABEL={서울:'서울',한국기타:'한국 기타',상해:'상해',북경:'북경',중국기타:'중국 기타',일본:'일본',미국:'미국',기타:'기타 국가'};
 const AVC=['#1D9E75','#378ADD','#D85A30','#7F77DD','#BA7517','#D4537E','#0F6E56','#185FA5'];
@@ -393,6 +398,46 @@ if(!cycle){
 function save(){
   localStorage.setItem('cp_pool',JSON.stringify(pool));
   localStorage.setItem('cp_cycle',JSON.stringify(cycle));
+  syncToSheets();
+}
+
+function syncToSheets(){
+  const data={pool,cycle,half:cycleHalf};
+  const url=SCRIPT_URL+'?action=save&data='+encodeURIComponent(JSON.stringify(data));
+  fetch(url).catch(()=>{});
+}
+
+async function loadFromSheets(){
+  showSyncStatus('불러오는 중...');
+  try{
+    const res=await fetch(SCRIPT_URL+'?action=load');
+    const data=await res.json();
+    if(data.error) throw new Error(data.error);
+    if(data.pool && data.pool.length>0){
+      pool=data.pool;
+      localStorage.setItem('cp_pool',JSON.stringify(pool));
+    }
+    if(data.cycle && data.cycle.length>0){
+      cycle=data.cycle;
+      localStorage.setItem('cp_cycle',JSON.stringify(cycle));
+    }
+    if(data.half){
+      cycleHalf=data.half;
+      localStorage.setItem('cp_half',cycleHalf);
+    }
+    showSyncStatus('동기화 완료 ✓');
+    setTimeout(()=>showSyncStatus(''),2000);
+    initHeader();renderCycle();
+  }catch(e){
+    showSyncStatus('오프라인 모드');
+    setTimeout(()=>showSyncStatus(''),3000);
+  }
+}
+
+function showSyncStatus(msg){
+  let el=document.getElementById('sync-status');
+  if(!el) return;
+  el.textContent=msg;
 }
 function getPerson(pid){return pool.find(p=>p.id===pid)||{name:'?',company:'',region:'기타',methods:[]};}
 function avColor(n){let h=0;for(let c of n)h+=c.charCodeAt(0);return AVC[h%AVC.length];}
@@ -729,6 +774,7 @@ function setView(v){
 
 initHeader();
 renderCycle();
+loadFromSheets();
 </script>
 </body>
 </html>

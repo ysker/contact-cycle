@@ -251,7 +251,40 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="mact">
     <button class="mbtn-c" onclick="closeModal('m-detail')">닫기</button>
     <button style="flex:1;padding:12px;font-size:14px;border-radius:8px;cursor:pointer;border:0.5px solid #E24B4A;color:#E24B4A;background:transparent;font-weight:500" onclick="deleteFromPool()">삭제</button>
+    <button style="flex:1;padding:12px;font-size:14px;border-radius:8px;cursor:pointer;border:0.5px solid var(--border2);color:var(--text2);background:transparent;font-weight:500" onclick="openEditModal()">수정</button>
     <button class="mbtn-p" onclick="addDetailToPool()">사이클에 추가</button>
+  </div>
+</div>
+</div>
+
+<!-- 연락처 수정 -->
+<div class="mbg" id="m-edit" onclick="bgClose(event,'m-edit')">
+<div class="modal">
+  <div class="modal-handle"></div>
+  <h2>연락처 수정</h2>
+  <div class="fr"><label>이름 *</label><input id="e-name" placeholder="홍길동" autocomplete="off"/></div>
+  <div class="fr"><label>회사 / 직책</label><input id="e-company" placeholder="회사명 · 직책" autocomplete="off"/></div>
+  <div class="fr">
+    <label>연락 수단</label>
+    <div class="chips" id="edit-method-chips">
+      <div class="chip" data-v="위챗" onclick="toggleChip(this)">위챗</div>
+      <div class="chip" data-v="카톡" onclick="toggleChip(this)">카톡</div>
+      <div class="chip" data-v="전화" onclick="toggleChip(this)">전화</div>
+      <div class="chip" data-v="이메일" onclick="toggleChip(this)">이메일</div>
+      <div class="chip" data-v="기타" onclick="toggleChip(this)">기타</div>
+    </div>
+  </div>
+  <div class="fr"><label>지역</label>
+    <select id="e-region">
+      <option value="서울">서울</option><option value="한국기타">한국 기타</option>
+      <option value="상해">상해</option><option value="북경">북경</option>
+      <option value="중국기타">중국 기타</option><option value="일본">일본</option>
+      <option value="미국">미국</option><option value="기타">기타 국가</option>
+    </select>
+  </div>
+  <div class="mact">
+    <button class="mbtn-c" onclick="closeModal('m-edit')">취소</button>
+    <button class="mbtn-p" onclick="saveEdit()">저장</button>
   </div>
 </div>
 </div>
@@ -488,6 +521,28 @@ function deleteFromPool(){
   pool=pool.filter(x=>x.id!==detailPersonId);
   cycle=cycle.filter(c=>c.pid!==detailPersonId);
   save();closeModal('m-detail');initHeader();renderCycle();
+  if(currentView==='pool')renderPool();
+}
+
+function openEditModal(){
+  if(!detailPersonId)return;
+  const p=pool.find(x=>x.id===detailPersonId);if(!p)return;
+  document.getElementById('e-name').value=p.name||'';
+  document.getElementById('e-company').value=p.company||'';
+  document.getElementById('e-region').value=p.region||'서울';
+  document.querySelectorAll('#edit-method-chips .chip').forEach(c=>{
+    c.classList.toggle('on',(p.methods||[]).includes(c.dataset.v));
+  });
+  closeModal('m-detail');
+  document.getElementById('m-edit').classList.add('open');
+}
+
+function saveEdit(){
+  const name=document.getElementById('e-name').value.trim();
+  if(!name){alert('이름을 입력해주세요');return;}
+  const methods=getChips('edit-method-chips');
+  pool=pool.map(p=>p.id===detailPersonId?{...p,name,company:document.getElementById('e-company').value.trim(),methods,region:document.getElementById('e-region').value}:p);
+  save();closeModal('m-edit');initHeader();renderCycle();
   if(currentView==='pool')renderPool();
 }
 
